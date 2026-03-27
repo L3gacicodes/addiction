@@ -152,14 +152,18 @@ export const AIChatModal = ({ isOpen, onClose }) => {
     setLoading(true)
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ai-response`, {
+      const response = await fetch('/api/ai-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userText })
       })
 
+      console.log('AI Support Modal Response Status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text();
+        console.error('AI Support Modal Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json()
