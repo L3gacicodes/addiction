@@ -144,18 +144,38 @@ export const AIChatModal = ({ isOpen, onClose }) => {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    setMessages([...messages, { role: 'user', text: input }])
+  const handleSend = async () => {
+    if (!input.trim() || loading) return
+    const userText = input.trim()
+    setMessages(prev => [...prev, { role: 'user', text: userText }])
     setInput('')
+    setLoading(true)
     
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ai-response`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       setMessages(prev => [...prev, { 
         role: 'ai', 
-        text: "I understand. Recovery is a journey with ups and downs. Tell me more about what triggered this feeling." 
+        text: data.reply || "I understand. Recovery is a journey. How can I help you through this?" 
       }])
-    }, 1000)
+    } catch (error) {
+      console.error('AI Support Error:', error)
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: "I'm having trouble connecting right now, but I'm still here for you. Take a deep breath." 
+      }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

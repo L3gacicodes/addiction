@@ -21,11 +21,11 @@ const SYSTEM_PROMPT =
 app.get('/health', (_req, res) => {
   res.json({ ok: true })
 })
-app.post('/ai-response', async (req, res) => {
+app.post('/api/ai-response', async (req, res) => {
   try {
-    const userText = (req.body?.text || '').trim()
+    const userText = (req.body?.message || '').trim()
     if (!userText) {
-      return res.status(400).json({ error: 'Missing text' })
+      return res.status(400).json({ error: 'Missing message' })
     }
     const body = {
       contents: [{ role: 'user', parts: [{ text: userText }] }],
@@ -42,13 +42,28 @@ app.post('/ai-response', async (req, res) => {
         body: JSON.stringify(body),
       }
     )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Gemini API Error:', errorData)
+      return res.status(response.status).json({ 
+        error: 'Gemini API failure', 
+        reply: "I'm having a moment to think. Could you repeat that?" 
+      })
+    }
+
     const data = await response.json()
     const aiMessage =
       data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('\n') ||
-      'Sorry, AI did not respond.'
-    res.json({ message: aiMessage })
+      'I understand. Tell me more about that.'
+    
+    res.json({ reply: aiMessage })
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch from Gemini' })
+    console.error('Server AI Error:', error)
+    res.status(500).json({ 
+      error: 'Failed to process AI response',
+      reply: "I'm having trouble connecting right now. Take a deep breath."
+    })
   }
 })
 

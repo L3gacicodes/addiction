@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { ensureProfile } from '../lib/profile.js'
@@ -10,7 +10,19 @@ export default function Signup() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+  const [resendLoading, setResendLoading] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let timer
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(timer)
+  }, [cooldown])
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -33,15 +45,25 @@ export default function Signup() {
     }
     if (data.user) {
       setSent(true)
-      const created = await ensureProfile(supabase, data.user.id, { username })
-      const profileError = null
-      // ensureProfile handles insert; profileError remains for compatibility if needed
-      if (profileError) {
-        setError(profileError.message)
-        return
-      }
-      alert('Signup successful! Please check your email to verify before logging in.')
-      navigate('/login')
+      setCooldown(60)
+      await ensureProfile(supabase, data.user.id, { username })
+    }
+  }
+
+  const handleResend = async () => {
+    if (cooldown > 0 || resendLoading) return
+    setResendLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    })
+    setResendLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setCooldown(60)
     }
   }
 
@@ -49,10 +71,27 @@ export default function Signup() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md bg-white shadow-sm rounded-lg p-6">
         <h1 className="text-2xl font-semibold mb-6 text-center">Sign up</h1>
-        {error && <div className="mb-4 rounded bg-red-50 text-red-700 px-3 py-2">{error}</div>}
+        {error && <div className="mb-4 rounded bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
         {sent ? (
-          <div className="rounded bg-green-50 text-green-800 px-3 py-2">
-            Check your email to verify your account. After verification, return to the login page.
+          <div className="space-y-4">
+            <div className="rounded bg-green-50 text-green-800 px-3 py-2 text-sm">
+              Check your email to verify your account. After verification, return to the login page.
+            </div>
+            <div className="text-center">
+              <button
+                onClick={handleResend}
+                disabled={cooldown > 0 || resendLoading}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {resendLoading ? (
+                  'Resending...'
+                ) : cooldown > 0 ? (
+                  `Resend Code in ${cooldown}s`
+                ) : (
+                  'Didn\'t get the code? Resend'
+                )}
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">

@@ -41,18 +41,22 @@ export default function AITherapistPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/ai-response`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ai-response`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: userMsg.text })
+        body: JSON.stringify({ message: userMsg.text })
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
       const data = await response.json()
       
       const aiMsg = {
         id: Date.now() + 1,
         sender: 'ai',
-        text: data.message,
+        text: data.reply || "I'm here to listen. Tell me more about that.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
       setMessages(prev => [...prev, aiMsg])

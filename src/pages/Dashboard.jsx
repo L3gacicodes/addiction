@@ -77,10 +77,16 @@ export default function Dashboard() {
   }
 
   const handleRelapse = async () => {
-    if (actionLoading || hasCheckedInToday) return
+    if (actionLoading) return
     setActionLoading(true)
+    
+    // Optimistic UI update: Set streak to 0 immediately
+    const today = new Date().toISOString().split('T')[0]
+    const oldProfile = { ...profile }
+    setProfile({ ...profile, streak_count: 0, last_checkin: today })
+    setShowRelapseModal(false)
+
     try {
-      const today = new Date().toISOString().split('T')[0]
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -91,11 +97,15 @@ export default function Dashboard() {
       
       if (error) throw error
 
-      setProfile({ ...profile, streak_count: 0, last_checkin: today })
-      setShowRelapseModal(false)
-      navigate('/panic')
+      // Wait a moment for the user to see the streak hit zero before navigating
+      setTimeout(() => {
+        navigate('/panic')
+      }, 800)
+
     } catch (err) {
       console.error('Error resetting streak:', err)
+      // Rollback if error
+      setProfile(oldProfile)
     } finally {
       setActionLoading(false)
     }
