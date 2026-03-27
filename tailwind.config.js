@@ -28,9 +28,8 @@ export default {
       },
     maxWidth: {
         'mobile': '430px',
-      }
-    },
-  },boxShadow: {
+      },
+      boxShadow: {
         'glow': '0 0 20px rgba(34, 197, 94, 0.3)',
         'glow-blue': '0 0 20px rgba(59, 130, 246, 0.3)',
       },
