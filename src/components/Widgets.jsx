@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
+import { useTheme } from '../App'
 
 export const MoodSelector = ({ selectedMood, onSelect }) => {
+  const { theme } = useTheme()
   const moods = [
     { icon: '😊', label: 'Great' },
     { icon: '😐', label: 'Neutral' },
@@ -24,11 +26,13 @@ export const MoodSelector = ({ selectedMood, onSelect }) => {
             className={`flex-shrink-0 px-5 py-4 rounded-[2rem] border flex flex-col items-center gap-2 transition-all min-w-[90px] backdrop-blur-xl ${
               isActive
                 ? 'bg-primary border-primary text-white shadow-glow'
-                : 'bg-surface/40 border-white/[0.08] text-textSecondary hover:border-white/20'
+                : theme === 'dark' 
+                  ? 'bg-surface/40 border-white/[0.08] text-textSecondary hover:border-white/20' 
+                  : 'bg-white border-black/[0.05] text-gray-500 hover:border-black/10 shadow-sm'
             }`}
           >
             <span className="text-2xl">{mood.icon}</span>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-textSecondary'}`}>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : (theme === 'dark' ? 'text-textSecondary' : 'text-gray-500')}`}>
               {mood.label}
             </span>
           </motion.button>
@@ -39,15 +43,16 @@ export const MoodSelector = ({ selectedMood, onSelect }) => {
 }
 
 export const WeeklyProgress = () => {
+  const { theme } = useTheme()
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const values = [40, 70, 100, 85, 60, 90, 100]
 
   return (
-    <div className="bg-surface/40 backdrop-blur-xl rounded-[2.5rem] p-7 border border-white/[0.08] shadow-2xl relative overflow-hidden group">
+    <div className={`backdrop-blur-xl rounded-[2.5rem] p-7 border shadow-2xl relative overflow-hidden group transition-colors duration-300 ${theme === 'dark' ? 'bg-surface/40 border-white/[0.08]' : 'bg-white border-black/[0.05]'}`}>
       <div className="flex justify-between items-center mb-8 relative z-10">
         <div>
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-textPrimary">Consistency</h3>
-          <p className="text-[10px] font-bold text-textSecondary uppercase mt-1">Recovery Pulse</p>
+          <h3 className={`text-xs font-black uppercase tracking-[0.2em] transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Consistency</h3>
+          <p className={`text-[10px] font-bold uppercase mt-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-400'}`}>Recovery Pulse</p>
         </div>
         <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
           <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
@@ -58,7 +63,7 @@ export const WeeklyProgress = () => {
       <div className="flex justify-between items-end h-32 gap-3 relative z-10">
         {days.map((day, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full group/bar">
-            <div className="w-full flex-1 bg-white/[0.03] rounded-2xl overflow-hidden flex flex-col justify-end border border-white/[0.02]">
+            <div className={`w-full flex-1 rounded-2xl overflow-hidden flex flex-col justify-end border transition-colors duration-300 ${theme === 'dark' ? 'bg-white/[0.03] border-white/[0.02]' : 'bg-black/[0.03] border-black/[0.02]'}`}>
               <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: `${values[i]}%` }}
@@ -66,15 +71,15 @@ export const WeeklyProgress = () => {
                 className={`w-full rounded-t-xl relative ${
                   values[i] === 100 
                     ? 'bg-gradient-to-t from-primary to-primarySoft shadow-glow' 
-                    : 'bg-white/[0.1] group-hover/bar:bg-white/[0.2] transition-colors'
-                }`}
+                    : theme === 'dark' ? 'bg-white/[0.1] group-hover/bar:bg-white/[0.2]' : 'bg-black/[0.05] group-hover/bar:bg-black/[0.1]'
+                } transition-colors`}
               >
                 {values[i] === 100 && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] drop-shadow-glow">✨</div>
                 )}
               </motion.div>
             </div>
-            <span className={`text-[9px] font-black uppercase tracking-tighter ${values[i] === 100 ? 'text-primary' : 'text-textSecondary'}`}>
+            <span className={`text-[9px] font-black uppercase tracking-tighter ${values[i] === 100 ? 'text-primary' : (theme === 'dark' ? 'text-textSecondary' : 'text-gray-400')}`}>
               {day}
             </span>
           </div>

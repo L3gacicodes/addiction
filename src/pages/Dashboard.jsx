@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../App.jsx'
+import { useAuth, useTheme } from '../App.jsx'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
@@ -12,6 +12,7 @@ import IrokoTree from '../components/IrokoTree'
 
 export default function Dashboard() {
   const { session } = useAuth()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -113,7 +114,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <AppShell>
-      <div className="flex-1 flex items-center justify-center bg-background">
+      <div className={`flex-1 flex items-center justify-center transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep' : 'bg-gray-50'}`}>
         <div className="relative">
           <motion.div 
             animate={{ rotate: 360 }} 
@@ -139,12 +140,12 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-1"
         >
-          <h2 className="text-[26px] font-black text-textPrimary tracking-tight uppercase leading-none">
+          <h2 className={`text-[26px] font-black tracking-tight uppercase leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>
             Your Space, {profile?.username?.split(' ')[0] || 'Kamsy'}
           </h2>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-glow" />
-            <p className="text-textSecondary text-[10px] font-black uppercase tracking-[0.25em] opacity-60">
+            <p className={`text-[10px] font-black uppercase tracking-[0.25em] opacity-60 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>
               Healing in progress • Day {profile?.streak_count || 0}
             </p>
           </div>
@@ -169,7 +170,7 @@ export default function Dashboard() {
           className="space-y-4"
         >
           <div className="flex justify-between items-center px-1">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-textSecondary/40">
+            <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
               Today's Choice
             </h3>
             <span className="text-[9px] font-black text-primary/30 uppercase tracking-widest">Active</span>
@@ -190,7 +191,7 @@ export default function Dashboard() {
           transition={{ delay: 0.3 }}
           className="space-y-4"
         >
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-textSecondary/40 px-1">
+          <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] px-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
             Mental Pulse
           </h3>
           <MoodSelector selectedMood={selectedMood} onSelect={setSelectedMood} />
@@ -203,7 +204,7 @@ export default function Dashboard() {
           transition={{ delay: 0.4 }}
           className="space-y-4"
         >
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-textSecondary/40 px-1">
+          <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] px-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
             Growth Metrics
           </h3>
           <WeeklyProgress />

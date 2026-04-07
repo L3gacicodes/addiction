@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
+import { useTheme } from '../App'
 
 export const Modal = ({ isOpen, onClose, children, title, subtitle, fullHeight = false }) => {
+  const { theme } = useTheme()
   return (
     <AnimatePresence>
       {isOpen && (
@@ -11,27 +13,27 @@ export const Modal = ({ isOpen, onClose, children, title, subtitle, fullHeight =
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-backgroundDeep/60 backdrop-blur-xl"
+            className={`fixed inset-0 backdrop-blur-xl transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep/60' : 'bg-gray-900/40'}`}
           />
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className={`relative w-full max-w-mobile bg-surface/80 backdrop-blur-2xl rounded-t-[3.5rem] sm:rounded-[3rem] border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col ${fullHeight ? 'h-[94vh]' : 'max-h-[92vh]'}`}
+            className={`relative w-full max-w-mobile rounded-t-[3.5rem] sm:rounded-[3rem] border-t shadow-[0_-20px_50px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col transition-all duration-300 ${fullHeight ? 'h-[94vh]' : 'max-h-[92vh]'} ${theme === 'dark' ? 'bg-surface/80 border-white/10 backdrop-blur-2xl' : 'bg-white border-black/5'}`}
           >
             {/* Header Handle for Mobile */}
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mt-5 mb-2 sm:hidden flex-shrink-0" />
+            <div className={`w-12 h-1.5 rounded-full mx-auto mt-5 mb-2 sm:hidden flex-shrink-0 transition-colors duration-300 ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
             
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="px-8 pt-6 pb-4 flex justify-between items-center border-b border-white/[0.03]">
+              <div className={`px-8 pt-6 pb-4 flex justify-between items-center border-b transition-colors duration-300 ${theme === 'dark' ? 'border-white/[0.03]' : 'border-black/[0.03]'}`}>
                 <div>
-                  <h2 className="text-xl font-black text-textPrimary uppercase tracking-tight leading-none">{title}</h2>
-                  {subtitle && <p className="text-[10px] font-bold text-textSecondary uppercase tracking-widest mt-1">{subtitle}</p>}
+                  <h2 className={`text-xl font-black uppercase tracking-tight leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>{title}</h2>
+                  {subtitle && <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-400'}`}>{subtitle}</p>}
                 </div>
                 <button 
                   onClick={onClose} 
-                  className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-textSecondary hover:text-textPrimary transition-all border border-white/5 active:scale-90"
+                  className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all border active:scale-90 ${theme === 'dark' ? 'bg-white/5 text-textSecondary hover:text-textPrimary border-white/5' : 'bg-gray-100 text-gray-400 hover:text-gray-900 border-black/5'}`}
                 >
                   ✕
                 </button>
@@ -49,85 +51,91 @@ export const Modal = ({ isOpen, onClose, children, title, subtitle, fullHeight =
   )
 }
 
-export const StrongModal = ({ isOpen, onClose, streak }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="I stayed strong today" subtitle="Daily Milestone Reached">
-    <div className="text-center space-y-8">
-      <div className="relative">
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-          transition={{ repeat: Infinity, duration: 4 }}
-          className="w-28 h-28 bg-primary/20 rounded-[2rem] flex items-center justify-center mx-auto text-6xl shadow-glow relative z-10"
-        >
-          🔥
-        </motion.div>
-        <div className="absolute inset-0 bg-primary/20 blur-[40px] rounded-full" />
-      </div>
-      <div>
-        <h3 className="text-3xl font-black text-textPrimary uppercase tracking-tighter">Day {streak} Complete!</h3>
-        <p className="text-textSecondary text-base font-medium mt-3 leading-relaxed">
-          Your tree is growing stronger. You've successfully resisted urges today.
-        </p>
-      </div>
-      <div className="bg-backgroundDeep/50 backdrop-blur-xl rounded-3xl p-6 border border-white/5 text-left relative overflow-hidden group">
-        <div className="relative z-10">
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-            <span className="w-1 h-1 bg-primary rounded-full animate-pulse" />
-            Recovery Insight
-          </p>
-          <p className="text-sm text-textSecondary leading-relaxed italic font-medium">
-            "Consistency is the playground of excellence." You're building a new life, one day at a time.
+export const StrongModal = ({ isOpen, onClose, streak }) => {
+  const { theme } = useTheme()
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="I stayed strong today" subtitle="Daily Milestone Reached">
+      <div className="text-center space-y-8">
+        <div className="relative">
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 4 }}
+            className="w-28 h-28 bg-primary/20 rounded-[2rem] flex items-center justify-center mx-auto text-6xl shadow-glow relative z-10"
+          >
+            🔥
+          </motion.div>
+          <div className="absolute inset-0 bg-primary/20 blur-[40px] rounded-full" />
+        </div>
+        <div>
+          <h3 className={`text-3xl font-black uppercase tracking-tighter transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Day {streak} Complete!</h3>
+          <p className={`text-base font-medium mt-3 leading-relaxed transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-600'}`}>
+            Your tree is growing stronger. You've successfully resisted urges today.
           </p>
         </div>
-        <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl" />
-      </div>
-      <button
-        onClick={onClose}
-        className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 active:scale-95 transition-all hover:bg-primaryDark"
-      >
-        Keep Going
-      </button>
-    </div>
-  </Modal>
-)
-
-export const RelapseModal = ({ isOpen, onClose, onConfirm }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="I slipped — help me reset" subtitle="Healing isn't linear">
-    <div className="text-center space-y-8 relative overflow-hidden">
-      {/* Background Illustration */}
-      <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-        <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="M12 8v4M12 16h.01" strokeLinecap="round" strokeWidth="2"/>
-        </svg>
-      </div>
-
-      <div className="w-24 h-24 bg-panic/10 rounded-[2.5rem] flex items-center justify-center mx-auto text-5xl relative z-10 shadow-inner border border-panic/20">
-        🌱
-        <div className="absolute inset-0 bg-panic/10 blur-[30px] rounded-full" />
-      </div>
-      <div className="relative z-10">
-        <h3 className="text-2xl font-black text-textPrimary uppercase tracking-tighter">It's okay to start again</h3>
-        <p className="text-textSecondary text-base font-medium mt-3 leading-relaxed">
-          A relapse isn't failure—it's part of the journey. What matters is that you're here now, choosing to restart.
-        </p>
-      </div>
-      <div className="space-y-4 relative z-10">
-        <button
-          onClick={onConfirm}
-          className="w-full py-5 bg-white text-black rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all hover:bg-red-500 hover:text-white border border-white/10"
-        >
-          Reset Streak & Restart
-        </button>
+        <div className={`backdrop-blur-xl rounded-3xl p-6 border text-left relative overflow-hidden group transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep/50 border-white/5' : 'bg-gray-50 border-black/5 shadow-inner'}`}>
+          <div className="relative z-10">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+              <span className="w-1 h-1 bg-primary rounded-full animate-pulse" />
+              Recovery Insight
+            </p>
+            <p className={`text-sm leading-relaxed italic font-medium transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-600'}`}>
+              "Consistency is the playground of excellence." You're building a new life, one day at a time.
+            </p>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl" />
+        </div>
         <button
           onClick={onClose}
-          className="w-full py-5 bg-white/5 text-textSecondary rounded-[1.5rem] font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-colors border border-white/5"
+          className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 active:scale-95 transition-all hover:bg-primaryDark"
         >
-          Cancel
+          Keep Going
         </button>
       </div>
-    </div>
-  </Modal>
-)
+    </Modal>
+  )
+}
+
+export const RelapseModal = ({ isOpen, onClose, onConfirm }) => {
+  const { theme } = useTheme()
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="I slipped — help me reset" subtitle="Healing isn't linear">
+      <div className="text-center space-y-8 relative overflow-hidden">
+        {/* Background Illustration */}
+        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M12 8v4M12 16h.01" strokeLinecap="round" strokeWidth="2"/>
+          </svg>
+        </div>
+
+        <div className="w-24 h-24 bg-panic/10 rounded-[2.5rem] flex items-center justify-center mx-auto text-5xl relative z-10 shadow-inner border border-panic/20">
+          🌱
+          <div className="absolute inset-0 bg-panic/10 blur-[30px] rounded-full" />
+        </div>
+        <div className="relative z-10">
+          <h3 className={`text-2xl font-black uppercase tracking-tighter transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>It's okay to start again</h3>
+          <p className={`text-base font-medium mt-3 leading-relaxed transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-600'}`}>
+            A relapse isn't failure—it's part of the journey. What matters is that you're here now, choosing to restart.
+          </p>
+        </div>
+        <div className="space-y-4 relative z-10">
+          <button
+            onClick={onConfirm}
+            className={`w-full py-5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all hover:bg-red-500 hover:text-white border ${theme === 'dark' ? 'bg-white text-black border-white/10' : 'bg-gray-900 text-white border-black/10'}`}
+          >
+            Reset Streak & Restart
+          </button>
+          <button
+            onClick={onClose}
+            className={`w-full py-5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] transition-colors border ${theme === 'dark' ? 'bg-white/5 text-textSecondary hover:bg-white/10 border-white/5' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 border-black/5'}`}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
 
 export const AIChatModal = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([

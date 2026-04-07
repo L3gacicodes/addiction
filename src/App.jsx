@@ -12,9 +12,14 @@ import CommunityPage from './pages/CommunityPage.jsx'
 import DesignSystemPage from './pages/DesignSystemPage.jsx'
 
 const AuthContext = createContext({ session: null })
+const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} })
 
 export function useAuth() {
   return useContext(AuthContext)
+}
+
+export function useTheme() {
+  return useContext(ThemeContext)
 }
 
 function ProtectedRoute({ children }) {
@@ -25,7 +30,22 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const [session, setSession] = useState(null)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark'
+  })
   const navigate = useNavigate()
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
+
+  useEffect(() => {
+    const root = window.document.documentElement
+    root.classList.remove('light', 'dark')
+    root.classList.add(theme)
+  }, [theme])
 
   const handlePostLogin = async (user) => {
     if (!supabase || !user) {
@@ -70,9 +90,10 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ session }}>
-      <div className="min-h-screen">
-        <Routes>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <AuthContext.Provider value={{ session }}>
+        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep text-textPrimary' : 'bg-gray-50 text-gray-900'}`}>
+          <Routes>
           <Route
             path="/"
             element={
@@ -123,7 +144,8 @@ export default function App() {
           />
           <Route path="/design-system" element={<DesignSystemPage />} />
         </Routes>
-      </div>
-    </AuthContext.Provider>
+        </div>
+      </AuthContext.Provider>
+    </ThemeContext.Provider>
   )
 }
