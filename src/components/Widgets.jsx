@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
 import { useTheme } from '../App'
 
 export const MoodSelector = ({ selectedMood, onSelect }) => {
@@ -44,46 +45,133 @@ export const MoodSelector = ({ selectedMood, onSelect }) => {
 
 export const WeeklyProgress = () => {
   const { theme } = useTheme()
+  const [hoveredDay, setHoveredDay] = useState(null)
+  
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const values = [40, 70, 100, 85, 60, 90, 100]
+  
+  // Data Structure: Consistency (0-2.5) + Recovery Pulse (0-2.5) = Total (5.0 max)
+  const metrics = [
+    { consistency: 2.5, pulse: 1.5, mood: 'Neutral', tools: true, checkedIn: true, noRelapse: true },
+    { consistency: 2.0, pulse: 2.5, mood: 'Great', tools: false, checkedIn: true, noRelapse: true },
+    { consistency: 2.5, pulse: 2.0, mood: 'Great', tools: true, checkedIn: true, noRelapse: true },
+    { consistency: 1.0, pulse: 0.5, mood: 'Angry', tools: false, checkedIn: true, noRelapse: false }, // Relapse Day
+    { consistency: 1.5, pulse: 0.8, mood: 'Struggling', tools: true, checkedIn: true, noRelapse: true },
+    { consistency: 2.5, pulse: 1.5, mood: 'Neutral', tools: true, checkedIn: true, noRelapse: true },
+    { consistency: 2.5, pulse: 2.5, mood: 'Great', tools: true, checkedIn: true, noRelapse: true },
+  ]
+
+  const totalScores = metrics.map(m => m.consistency + m.pulse)
+  const averageScore = totalScores.reduce((a, b) => a + b, 0) / totalScores.length
+  const trend = totalScores[6] > totalScores[5] ? 'Improving' : 'Declining'
+  const needsSupport = metrics.slice(-3).every(m => m.pulse < 1.0)
 
   return (
     <div className={`backdrop-blur-xl rounded-[2.5rem] p-7 border shadow-2xl relative overflow-hidden group transition-colors duration-300 ${theme === 'dark' ? 'bg-surface/40 border-white/[0.08]' : 'bg-white border-black/[0.05]'}`}>
-      <div className="flex justify-between items-center mb-8 relative z-10">
+      <div className="flex justify-between items-start mb-8 relative z-10">
         <div>
-          <h3 className={`text-xs font-black uppercase tracking-[0.2em] transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Consistency</h3>
-          <p className={`text-[10px] font-bold uppercase mt-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-400'}`}>Recovery Pulse</p>
+          <h3 className={`text-xs font-black uppercase tracking-[0.2em] transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Growth Metrics</h3>
+          <p className={`text-[10px] font-bold uppercase mt-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-400'}`}>
+            {trend === 'Improving' ? '📈 Trending Up' : '📉 Focus Required'}
+          </p>
         </div>
-        <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
-          <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-          <span className="text-[9px] font-black text-primary uppercase tracking-widest">Steady</span>
-        </div>
+        
+        <AnimatePresence>
+          {needsSupport && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-nova/10 px-3 py-1.5 rounded-full border border-nova/20 flex items-center gap-2"
+            >
+              <span className="text-[9px] font-black text-nova uppercase tracking-widest animate-pulse">Talk to Nova?</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       
       <div className="flex justify-between items-end h-32 gap-3 relative z-10">
-        {days.map((day, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full group/bar">
-            <div className={`w-full flex-1 rounded-2xl overflow-hidden flex flex-col justify-end border transition-colors duration-300 ${theme === 'dark' ? 'bg-white/[0.03] border-white/[0.02]' : 'bg-black/[0.03] border-black/[0.02]'}`}>
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: `${values[i]}%` }}
-                transition={{ duration: 1.5, delay: i * 0.1, ease: [0.33, 1, 0.68, 1] }}
-                className={`w-full rounded-t-xl relative ${
-                  values[i] === 100 
-                    ? 'bg-gradient-to-t from-primary to-primarySoft shadow-glow' 
-                    : theme === 'dark' ? 'bg-white/[0.1] group-hover/bar:bg-white/[0.2]' : 'bg-black/[0.05] group-hover/bar:bg-black/[0.1]'
-                } transition-colors`}
-              >
-                {values[i] === 100 && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] drop-shadow-glow">✨</div>
+        {days.map((day, i) => {
+          const m = metrics[i]
+          const totalHeight = ((m.consistency + m.pulse) / 5) * 100
+          const consistencyHeight = (m.consistency / (m.consistency + m.pulse)) * 100
+          
+          return (
+            <div 
+              key={i} 
+              className="flex-1 flex flex-col items-center gap-3 h-full group/bar relative"
+              onMouseEnter={() => setHoveredDay(i)}
+              onMouseLeave={() => setHoveredDay(null)}
+            >
+              <div className={`w-full flex-1 rounded-2xl overflow-hidden flex flex-col justify-end border transition-colors duration-300 relative ${theme === 'dark' ? 'bg-white/[0.03] border-white/[0.02]' : 'bg-black/[0.03] border-black/[0.02]'}`}>
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: `${totalHeight}%` }}
+                  transition={{ duration: 1, delay: i * 0.1, ease: [0.33, 1, 0.68, 1] }}
+                  className="w-full flex flex-col justify-end overflow-hidden"
+                >
+                  {/* Recovery Pulse (Purple/Blue) */}
+                  <div 
+                    className={`w-full bg-gradient-to-t from-nova to-secondary flex-1 transition-all duration-300 ${hoveredDay === i ? 'brightness-125' : ''}`}
+                    style={{ height: `${100 - consistencyHeight}%` }}
+                  />
+                  {/* Consistency (Green) */}
+                  <div 
+                    className={`w-full bg-gradient-to-t from-primary to-primarySoft transition-all duration-300 ${hoveredDay === i ? 'brightness-125' : ''}`}
+                    style={{ height: `${consistencyHeight}%` }}
+                  />
+                </motion.div>
+
+                {/* Relapse Indicator */}
+                {!m.noRelapse && (
+                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-panic rounded-full shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
                 )}
-              </motion.div>
+              </div>
+              
+              <span className={`text-[9px] font-black uppercase tracking-tighter transition-colors duration-300 ${hoveredDay === i ? 'text-primary' : (theme === 'dark' ? 'text-textSecondary' : 'text-gray-400')}`}>
+                {day}
+              </span>
+
+              {/* Tooltip */}
+              <AnimatePresence>
+                {hoveredDay === i && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                    className={`absolute bottom-full mb-4 z-50 p-4 rounded-2xl border shadow-2xl min-w-[140px] pointer-events-none transition-colors duration-300 ${theme === 'dark' ? 'bg-surface border-white/10' : 'bg-white border-black/10'}`}
+                  >
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-2 pb-2 border-b transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 text-textPrimary' : 'border-black/5 text-gray-900'}`}>
+                      {day} Breakdown
+                    </p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] font-bold text-primary uppercase">Consistency</span>
+                        <span className={`text-[9px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>{m.consistency.toFixed(1)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] font-bold text-nova uppercase">Recovery Pulse</span>
+                        <span className={`text-[9px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>{m.pulse.toFixed(1)}</span>
+                      </div>
+                      <div className="mt-2 pt-1 border-t border-white/5">
+                        <p className={`text-[8px] font-medium transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>
+                          Mood: <span className="text-primary font-black uppercase">{m.mood}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <span className={`text-[9px] font-black uppercase tracking-tighter ${values[i] === 100 ? 'text-primary' : (theme === 'dark' ? 'text-textSecondary' : 'text-gray-400')}`}>
-              {day}
-            </span>
-          </div>
-        ))}
+          )
+        })}
+      </div>
+
+      {/* Encouraging Message Footer */}
+      <div className="mt-6 pt-4 border-t border-white/[0.03]">
+        <p className={`text-[10px] font-medium leading-relaxed italic transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>
+          {!metrics[metrics.length-1].noRelapse 
+            ? "A slip is a lesson, not a loss. Your foundation is still there—let's rebuild together."
+            : "Your recovery pulse is stabilizing. Keep choosing yourself, one small win at a time."}
+        </p>
       </div>
     </div>
   )
