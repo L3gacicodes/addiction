@@ -4,56 +4,148 @@ import { useTheme } from '../App'
 
 export const AppShell = ({ children }) => {
   const { theme } = useTheme()
+  const location = useLocation()
+
+  const sidebarItems = [
+    { group: 'MAIN', items: [
+      { path: '/dashboard', label: 'Home', icon: '🏠', color: 'primary' },
+      { path: '/community', label: 'Community', icon: '👥', color: 'textSecondary' },
+      { path: '/ai-therapist', label: 'Nova AI', icon: '🤖', color: 'nova' },
+      { path: '/progress', label: 'Progress', icon: '📊', color: 'secondary' },
+    ]},
+    { group: 'TOOLS', items: [
+      { path: '/mindfulness', label: 'Mindfulness', icon: '🧘', color: 'primary' },
+      { path: '/journal', label: 'Journal', icon: '📓', color: 'textSecondary' },
+      { path: '/panic', label: 'Panic Button', icon: '🚨', color: 'panic', isPanic: true },
+    ]}
+  ]
+
   return (
-    <div className={`min-h-screen flex justify-center items-start overflow-x-hidden selection:bg-primary/30 relative transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep' : 'bg-gray-50'}`}>
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] ${theme === 'dark' ? 'bg-nova/10' : 'bg-nova/5'}`} />
-        <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] ${theme === 'dark' ? 'bg-primary/10' : 'bg-primary/5'}`} />
-        <div className={`absolute top-[30%] right-[5%] w-[30%] h-[30%] rounded-full blur-[100px] ${theme === 'dark' ? 'bg-secondary/5' : 'bg-secondary/3'}`} />
-        <div className={`absolute inset-0 ${theme === 'dark' ? 'bg-radial-gradient(circle at top, rgba(34,197,94,0.05), transparent 60%)' : 'bg-radial-gradient(circle at top, rgba(34,197,94,0.02), transparent 60%)'}`} />
+    <div className={`min-h-screen flex justify-center items-start overflow-x-hidden selection:bg-primary/30 relative transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-gray-50'}`}>
+      {/* Sidebar - Left */}
+      <div className={`hidden lg:flex flex-col w-72 h-screen sticky top-0 p-8 space-y-12 border-r transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-white'}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <span className="text-xl">🌱</span>
+          </div>
+          <div>
+            <h1 className={`text-xl font-black tracking-tighter transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Noshake</h1>
+            <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] leading-none">Recovery</p>
+          </div>
+        </div>
+
+        <nav className="space-y-10">
+          {sidebarItems.map((group) => (
+            <div key={group.group} className="space-y-4">
+              <p className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-300 ${theme === 'dark' ? 'text-white/20' : 'text-gray-400'}`}>{group.group}</p>
+              <div className="space-y-2">
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.path
+                  return (
+                    <Link 
+                      key={item.path} 
+                      to={item.path}
+                      className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden ${
+                        isActive 
+                          ? 'bg-primary/10 border border-primary/20' 
+                          : item.isPanic 
+                            ? 'bg-panic/10 border border-panic/20' 
+                            : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="text-lg relative z-10">{item.icon}</span>
+                      <span className={`text-[13px] font-black tracking-tight relative z-10 transition-colors duration-300 ${
+                        isActive 
+                          ? 'text-primary' 
+                          : item.isPanic 
+                            ? 'text-panic' 
+                            : theme === 'dark' ? 'text-textSecondary group-hover:text-textPrimary' : 'text-gray-600'
+                      }`}>
+                        {item.label}
+                      </span>
+                      {isActive && <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
       </div>
 
-      {/* Desktop Left Panel */}
-      <div className={`hidden lg:flex flex-col w-80 h-screen sticky top-0 p-8 space-y-8 text-left border-r backdrop-blur-3xl transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-backgroundDeep/50' : 'border-black/5 bg-white/50'}`}>
-        <div className="space-y-2">
-          <h2 className={`text-3xl font-black uppercase tracking-tighter transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Your Journey</h2>
-          <p className={`text-sm leading-relaxed transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-600'}`}>"The secret of getting ahead is getting started." You're building a new life, one day at a time.</p>
-        </div>
-        <div className={`rounded-3xl p-6 border transition-colors duration-300 ${theme === 'dark' ? 'bg-surface/50 border-white/5' : 'bg-white border-black/5 shadow-sm'}`}>
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4">Daily Focus</p>
-          <p className={`text-sm font-medium italic transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-800'}`}>"Self-discipline is the highest form of self-love."</p>
-        </div>
-      </div>
-
-      {/* Main App Shell */}
-      <div className={`w-full max-w-mobile min-h-screen relative flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.1)] border-x transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep border-white/[0.02]' : 'bg-white border-black/[0.02]'}`}>
-        <div className="flex-1 flex flex-col pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,100px)]">
+      {/* Main Content - Center */}
+      <div className={`w-full max-w-2xl min-h-screen relative flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-white'}`}>
+        <div className="flex-1 flex flex-col pt-12 px-10 pb-32">
           {children}
         </div>
       </div>
 
-      {/* Desktop Right Panel */}
-      <div className={`hidden lg:flex flex-col w-80 h-screen sticky top-0 p-8 space-y-8 text-left border-l backdrop-blur-3xl transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-backgroundDeep/50' : 'border-black/5 bg-white/50'}`}>
-        <div className="space-y-4">
-          <h2 className={`text-xl font-black uppercase tracking-tight transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Community Feed</h2>
-          <div className="space-y-4">
-            {[1, 2].map(i => (
-              <div key={i} className={`rounded-2xl p-4 border space-y-2 transition-colors duration-300 ${theme === 'dark' ? 'bg-surface/30 border-white/5' : 'bg-white border-black/5 shadow-sm'}`}>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/20" />
-                  <span className={`text-[10px] font-bold uppercase transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-800'}`}>Anonymous</span>
+      {/* Side Panel - Right */}
+      <div className={`hidden lg:flex flex-col w-96 h-screen sticky top-0 p-10 space-y-12 border-l transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-white'}`}>
+        {/* Nova AI Card */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className={`text-sm font-black uppercase tracking-tight transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Nova AI</h2>
+            <span className={`text-[10px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Always on</span>
+          </div>
+          
+          <div className={`rounded-[2.5rem] p-8 border relative overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5 shadow-2xl shadow-nova/10' : 'bg-gray-50 border-black/5 shadow-sm'}`}>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-nova/20 flex items-center justify-center text-2xl">🤖</div>
+              <div>
+                <h3 className={`text-base font-black uppercase transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>NOVA</h3>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className={`text-[10px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>Always listening</span>
                 </div>
-                <p className={`text-[11px] line-clamp-2 italic transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>"I stayed strong today even when things got tough..."</p>
+              </div>
+            </div>
+            <p className={`text-sm font-medium leading-relaxed mb-8 transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+              What's on your mind today, Kamsy? I'm here whenever you need to talk.
+            </p>
+            <button className={`w-full py-4 rounded-2xl flex items-center justify-between px-6 transition-all border group ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20' : 'bg-white border-black/10 text-gray-400'}`}>
+              <span className="text-[11px] font-black uppercase tracking-widest">Start AI session...</span>
+              <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Community Feed */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className={`text-sm font-black uppercase tracking-tight transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Community Feed</h2>
+            <span className={`text-[10px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Live</span>
+          </div>
+          
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className={`rounded-[2rem] p-6 border space-y-4 transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5 shadow-sm'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">A</div>
+                  <div>
+                    <span className={`text-[11px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-700'}`}>Anonymous</span>
+                    <span className={`text-[10px] font-bold ml-2 transition-colors duration-300 ${theme === 'dark' ? 'text-white/20' : 'text-gray-400'}`}>Just now</span>
+                  </div>
+                </div>
+                <p className={`text-[12px] leading-relaxed transition-colors duration-300 ${theme === 'dark' ? 'text-white/80' : 'text-gray-600'}`}>
+                  "I stayed strong today even when things got tough. One day at a time."
+                </p>
+                <div className="flex items-center gap-4 text-[10px] font-black text-white/30">
+                  <div className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer">
+                    <span>▲</span> 4
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
+                    <span>💬</span> 0 comments
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-        <div className={`mt-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl p-6 border text-center group cursor-pointer transition-all ${theme === 'dark' ? 'border-white/10 hover:border-primary/30' : 'border-black/5 hover:border-primary/20'}`}>
-          <p className={`text-xs font-black uppercase mb-2 transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Need to talk?</p>
-          <button className="text-[10px] font-black text-primary uppercase tracking-widest group-hover:underline">Start AI Session →</button>
-        </div>
       </div>
+
+      {/* Mobile Bottom Nav */}
+      <BottomNav />
     </div>
   )
 }
@@ -61,40 +153,20 @@ export const AppShell = ({ children }) => {
 export const Topbar = ({ username, avatarUrl }) => {
   const { theme, toggleTheme } = useTheme()
   return (
-    <div className={`px-6 py-5 flex items-center justify-between sticky top-0 backdrop-blur-xl z-20 border-b transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep/60 border-white/[0.03]' : 'bg-white/60 border-black/[0.03]'}`}>
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-[1.2rem] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20 shadow-glow">
-          <span className="text-2xl">🌳</span>
-        </div>
-        <div>
-          <h1 className="text-[11px] font-black text-primary leading-none uppercase tracking-[0.3em]">Noshake</h1>
-          <p className={`text-[13px] font-black uppercase tracking-tighter mt-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>Hello, {username || 'Kamsy'}!</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <motion.button 
-          whileTap={{ scale: 0.9 }} 
-          onClick={toggleTheme}
-          className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
-        >
-          <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
-        </motion.button>
-        <motion.button 
-          whileTap={{ scale: 0.9 }} 
-          className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
-        >
-          <span className="text-xl">🔔</span>
-        </motion.button>
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/40 to-secondarySoft/40 p-[1.5px] shadow-lg">
-          <div className={`w-full h-full rounded-[0.95rem] flex items-center justify-center overflow-hidden border transition-colors duration-300 ${theme === 'dark' ? 'bg-surface border-white/5' : 'bg-white border-black/5'}`}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
-            ) : (
-              <span className={`text-sm font-black uppercase transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-800'}`}>{username?.[0] || 'K'}</span>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="flex items-center justify-end gap-3 mb-10 lg:absolute lg:top-12 lg:right-10">
+      <motion.button 
+        whileTap={{ scale: 0.9 }} 
+        onClick={toggleTheme}
+        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+      >
+        <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
+      </motion.button>
+      <motion.button 
+        whileTap={{ scale: 0.9 }} 
+        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+      >
+        <span className="text-xl">🔔</span>
+      </motion.button>
     </div>
   )
 }
@@ -111,14 +183,14 @@ export const BottomNav = () => {
   ]
 
   return (
-    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] backdrop-blur-2xl border p-1.5 rounded-[2.5rem] flex items-center justify-between z-30 transition-all duration-300 h-20 ${theme === 'dark' ? 'bg-surface/40 border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/80 border-black/[0.05] shadow-[0_10px_30px_rgba(0,0,0,0.1)]'}`}>
+    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] backdrop-blur-2xl border p-1.5 rounded-[2.5rem] flex items-center justify-between z-30 transition-all duration-300 h-20 lg:hidden ${theme === 'dark' ? 'bg-surface/40 border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/80 border-black/[0.05] shadow-[0_10px_30px_rgba(0,0,0,0.1)]'}`}>
       {items.map((item) => {
         const isActive = location.pathname === item.path
         return (
           <Link key={item.path} to={item.path} className="relative flex-1 flex flex-col items-center justify-center py-2 gap-1 group h-full">
             {isActive && (
               <motion.div 
-                layoutId="nav-bg"
+                layoutId="nav-bg-mobile"
                 className={`absolute inset-0 rounded-[1.8rem] border mx-1 ${theme === 'dark' ? 'bg-primary/10 border-primary/20' : 'bg-primary/5 border-primary/10'}`}
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
@@ -129,9 +201,6 @@ export const BottomNav = () => {
             >
               {item.icon}
             </motion.div>
-            <span className={`text-[9px] z-10 font-black uppercase tracking-tighter ${isActive ? 'text-primary' : (item.label === 'Panic' ? 'text-panic/70' : (theme === 'dark' ? 'text-textSecondary' : 'text-gray-400'))}`}>
-              {item.label}
-            </span>
           </Link>
         )
       })}
@@ -139,61 +208,42 @@ export const BottomNav = () => {
   )
 }
 
-export const StreakCard = ({ streak }) => {
+export const StreakCard = ({ streak, label, sub, colorClass, progress }) => {
   const { theme } = useTheme()
-  const percentage = Math.min((streak / 14) * 100, 100)
   
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ y: -5, shadow: theme === 'dark' ? '0 20px 40px rgba(34, 197, 94, 0.2)' : '0 10px 30px rgba(34, 197, 94, 0.1)' }}
-      className={`rounded-[2.5rem] p-8 text-white shadow-2xl overflow-hidden relative group h-full flex flex-col justify-between min-h-[200px] transition-all duration-300 ${theme === 'dark' ? 'bg-gradient-to-br from-primary to-primarySoft shadow-primary/20' : 'bg-gradient-to-br from-primary/90 to-primarySoft/90 shadow-primary/10'}`}
+      className={`rounded-[2rem] p-6 text-white overflow-hidden relative group h-full flex flex-col justify-between min-h-[160px] transition-all duration-300 ${colorClass}`}
     >
-      {/* Background Illustration */}
-      <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-        <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M12 19c-4 0-6-2-6-6 0-3 2-5 6-5s6 2 6 5c0 4-2 6-6 6z" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
-        </svg>
-      </div>
-
-      <div className="relative z-10 flex flex-col h-full justify-center items-center text-center space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70">Current Streak</p>
-        <motion.h2 
-          key={streak}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-7xl font-black tracking-tighter leading-none"
-        >
-          {streak}
-        </motion.h2>
-        <p className="text-sm font-black uppercase tracking-widest opacity-90">Days Sober</p>
-        
-        <div className="w-full max-w-[200px] mt-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[8px] font-black uppercase tracking-widest opacity-70">Growth Progress</span>
-            <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">Lv. {Math.floor(streak / 14) + 1}</span>
-          </div>
-          <div className="h-2 bg-black/20 rounded-full overflow-hidden p-0.5 border border-white/10 relative">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${percentage}%` }}
-              transition={{ type: "spring", stiffness: 50, damping: 20 }}
-              className="h-full bg-white rounded-full relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-white animate-pulse" />
-            </motion.div>
-          </div>
+      <div className="relative z-10 flex flex-col h-full justify-between">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">{label}</p>
+        <div>
+          <h2 className="text-4xl font-black tracking-tighter leading-none mb-1">{streak}</h2>
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-70">{sub}</p>
         </div>
+        
+        {progress !== undefined && (
+          <div className="w-full mt-4">
+            <div className="h-1 bg-black/20 rounded-full overflow-hidden relative">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-white rounded-full relative"
+              />
+            </div>
+            <p className="text-[8px] font-black uppercase tracking-widest mt-2 opacity-50">{progress}% to next level</p>
+          </div>
+        )}
       </div>
       
-      {/* Background Orbs */}
-      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-[50px] group-hover:bg-white/20 transition-colors" />
-      <div className="absolute -left-8 -top-8 w-32 h-32 bg-secondarySoft/20 rounded-full blur-[50px]" />
+      {/* Background Graphic */}
+      <div className="absolute -right-4 -top-4 opacity-10 text-6xl">✨</div>
     </motion.div>
   )
 }
+
 
 export const ActionButtons = ({ onStrong, onRelapse, onAI, onCommunity, disabled = false }) => {
   const buttons = [

@@ -133,48 +133,96 @@ export default function Dashboard() {
     <AppShell>
       <Topbar username={profile?.username} />
       
-      <main className="flex-1 px-5 pt-6 space-y-section overflow-y-auto no-scrollbar scroll-smooth">
-        {/* Welcome Section */}
+      <main className="space-y-12">
+        {/* Welcome & Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-1"
+          className="space-y-6"
         >
-          <h2 className={`text-[26px] font-black tracking-tight uppercase leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'}`}>
-            Your Space, {profile?.username?.split(' ')[0] || 'Kamsy'}
-          </h2>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-glow" />
-            <p className={`text-[10px] font-black uppercase tracking-[0.25em] opacity-60 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>
-              Healing in progress • Day {profile?.streak_count || 0}
-            </p>
+          <div className="space-y-2">
+            <h2 className={`text-6xl font-black tracking-tighter leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Your journey,<br />
+              <span className="text-primary">{profile?.username || 'Kamsy'}</span>
+            </h2>
+            <div className="text-3xl mt-4">🌱</div>
           </div>
+          
+          <p className={`text-xl font-medium leading-relaxed max-w-md transition-colors duration-300 ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
+            "The secret of getting ahead is getting started." — one day at a time.
+          </p>
         </motion.div>
 
-        {/* Main Stats Card & Signature Tree */}
+        {/* Vertical Metric Cards Section */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 gap-4 h-[220px]"
+          className="flex gap-4 h-[300px]"
         >
-          <StreakCard streak={profile?.streak_count || 0} />
-          <IrokoTree streak={profile?.streak_count || 0} />
+          <div className="flex-1">
+            <StreakCard 
+              streak={profile?.streak_count || 0} 
+              label="CUR STR"
+              sub="Days sober"
+              colorClass="bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/20"
+              progress={((profile?.streak_count || 0) % 14 / 14 * 100).toFixed(0)}
+            />
+          </div>
+          <div className="flex-1">
+            <StreakCard 
+              streak={`Lv. ${Math.floor((profile?.streak_count || 0) / 14) + 1}`}
+              label="GRO LEV"
+              sub="Sprout stage"
+              colorClass="bg-gradient-to-b from-nova/20 to-nova/5 border border-nova/20"
+              progress={35}
+            />
+          </div>
+          <div className="flex-1">
+            <StreakCard 
+              streak="S"
+              label="VIT S"
+              sub="Status Grow"
+              colorClass="bg-gradient-to-b from-secondary/20 to-secondary/5 border border-secondary/20"
+              progress={80}
+            />
+          </div>
         </motion.section>
 
-        {/* Quick Actions */}
+        {/* Signature Tree Section */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="space-y-4"
+          className="space-y-6"
         >
-          <div className="flex justify-between items-center px-1">
-            <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
-              Today's Choice
-            </h3>
-            <span className="text-[9px] font-black text-primary/30 uppercase tracking-widest">Active</span>
+          <div className="flex justify-between items-center">
+            <h3 className={`text-sm font-black uppercase tracking-tight transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Signature Tree</h3>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className={`text-[10px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Growing</span>
+            </div>
           </div>
+          
+          <div className={`rounded-[2.5rem] p-10 border transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5'}`}>
+            <div className="h-64 flex items-center justify-center">
+              <IrokoTree streak={profile?.streak_count || 0} />
+            </div>
+            <div className="mt-8 flex justify-between items-center">
+              <div>
+                <p className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Tree Health</p>
+                <p className={`text-sm font-black transition-colors duration-300 ${theme === 'dark' ? 'text-primary' : 'text-primaryDark'}`}>Excellent</p>
+              </div>
+              <div className="text-right">
+                <p className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Next Stage</p>
+                <p className={`text-sm font-black transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Young Oak</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Action Buttons for Mobile */}
+        <div className="lg:hidden pb-12">
           <ActionButtons 
             onStrong={handleStayedStrong}
             onRelapse={() => setShowRelapseModal(true)}
@@ -182,33 +230,9 @@ export default function Dashboard() {
             onCommunity={() => navigate('/community')}
             disabled={hasCheckedInToday}
           />
-        </motion.section>
+        </div>
+      </main>
 
-        {/* Mood Selector */}
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-4"
-        >
-          <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] px-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
-            Mental Pulse
-          </h3>
-          <MoodSelector selectedMood={selectedMood} onSelect={setSelectedMood} />
-        </motion.section>
-
-        {/* Progress Chart */}
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-4"
-        >
-          <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] px-1 transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary/40' : 'text-gray-400'}`}>
-            Growth Metrics
-          </h3>
-          <WeeklyProgress />
-        </motion.section>
 
         {/* AI Companion Card */}
         <motion.section 
