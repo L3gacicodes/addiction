@@ -1,8 +1,14 @@
 {
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "",
+      "excludeFiles": "{node_modules,dist,build,.git,.trae,.log,.figma}/**"
+    }
+  },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
       "source": "/(.*)",
