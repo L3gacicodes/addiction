@@ -177,7 +177,12 @@ export const AIChatModal = ({ isOpen, onClose }) => {
       setLoading(false)
     } else {
       setRetryMessage(text)
-      setError({ code: result.code || 'GEMINI_API_ERROR', message: result.error || errorMessageFromCode(result.code) })
+      setError({
+        code: result.code || 'GEMINI_API_ERROR',
+        message: result.error || errorMessageFromCode(result.code),
+        debug: result.debug && Object.keys(result.debug).length ? result.debug : null,
+        status: result.status || 0,
+      })
       setLoading(false)
     }
   }
@@ -240,8 +245,20 @@ export const AIChatModal = ({ isOpen, onClose }) => {
                 <div className={`rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${theme === 'dark' ? 'bg-panic/10 border border-panic/20' : 'bg-red-50 border border-red-100'}`}>
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${theme === 'dark' ? 'bg-panic/20' : 'bg-red-100'}`}>⚠️</div>
                   <div className="flex-1">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-panic' : 'text-red-500'}`}>{error.code || 'NOVA_ERROR'}</p>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-panic' : 'text-red-500'}`}>{error.code || 'NOVA_ERROR'}{error.status ? ` · HTTP ${error.status}` : ''}</p>
                     <p className={`text-sm font-medium mt-1 ${theme === 'dark' ? 'text-white/80' : 'text-red-700'}`}>{error.message}</p>
+                    {error.debug && import.meta.env.DEV && (
+                      <div className="mt-3 p-3 rounded-xl bg-black/90 text-white text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-all select-all border border-red-500/40">
+{`GEMINI DEBUG (DEV ONLY)
+model     : ${error.debug.model || '—'}
+status    : ${error.debug.status ?? '—'}
+code      : ${error.debug.code || '—'}
+geminiCode: ${error.debug.geminiCode || '—'}
+attempts  : ${error.debug.attempts || 1}
+duration  : ${error.debug.durationMs ?? '—'} ms
+message   : ${error.debug.message || '—'}`}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => retryMessage && sendAndAppend(retryMessage)}

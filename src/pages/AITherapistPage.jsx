@@ -75,7 +75,12 @@ What's coming up for you today?`,
       setLoading(false)
     } else {
       setRetryMessage(text)
-      setError({ code: result.code || 'GEMINI_API_ERROR', message: result.error || errorMessageFromCode(result.code) })
+      setError({
+        code: result.code || 'GEMINI_API_ERROR',
+        message: result.error || errorMessageFromCode(result.code),
+        debug: result.debug && Object.keys(result.debug).length ? result.debug : null,
+        status: result.status || 0,
+      })
       setLoading(false)
     }
   }
@@ -194,8 +199,20 @@ What's coming up for you today?`,
               <div className="rounded-2xl border border-red-100 dark:border-panic/20 bg-red-50 dark:bg-panic/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="w-11 h-11 rounded-xl bg-red-100 dark:bg-panic/20 flex items-center justify-center text-2xl flex-shrink-0">⚠️</div>
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-500 dark:text-panic">{error.code || 'NOVA_ERROR'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-500 dark:text-panic">{error.code || 'NOVA_ERROR'}{error.status ? ` · HTTP ${error.status}` : ''}</p>
                   <p className="text-sm font-medium text-red-700 dark:text-white/80 mt-1">{error.message}</p>
+                  {error.debug && import.meta.env.DEV && (
+                    <div className="mt-3 p-3 rounded-xl bg-black/90 text-white text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-all select-all border border-red-500/40">
+{`GEMINI DEBUG (DEV ONLY)
+model     : ${error.debug.model || '—'}
+status    : ${error.debug.status ?? '—'}
+code      : ${error.debug.code || '—'}
+geminiCode: ${error.debug.geminiCode || '—'}
+attempts  : ${error.debug.attempts || 1}
+duration  : ${error.debug.durationMs ?? '—'} ms
+message   : ${error.debug.message || '—'}`}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={handleRetry}
