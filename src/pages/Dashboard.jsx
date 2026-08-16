@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 
-import { AppShell, Topbar, BottomNav, StreakCard, ActionButtons } from '../components/Shell'
+import { AppShell, Topbar, StreakCard, ActionButtons } from '../components/Shell'
 import { AIPreviewCard, QuoteCard, CommunityFeed } from '../components/Widgets'
 import { StrongModal, RelapseModal, AIChatModal } from '../components/Modals'
 import IrokoTree from '../components/IrokoTree'
@@ -85,6 +85,8 @@ export default function Dashboard() {
       
       if (error) throw error
 
+      await supabase.from('checkins').insert({ user_id: session.user.id, relapse: false })
+
       setProfile({ ...profile, streak_count: newStreak, last_checkin: today })
       setShowStrongModal(true)
       confetti({
@@ -120,6 +122,8 @@ export default function Dashboard() {
         .eq('id', session.user.id)
       
       if (error) throw error
+
+      await supabase.from('checkins').insert({ user_id: session.user.id, relapse: true })
 
       // Wait a moment for the user to see the streak hit zero before navigating
       setTimeout(() => {
@@ -292,8 +296,6 @@ export default function Dashboard() {
           />
         </motion.section>
       </main>
-
-      <BottomNav />
 
       {/* Modals */}
       <StrongModal 

@@ -10,8 +10,12 @@ import PanicPage from './pages/PanicPage.jsx'
 import AITherapistPage from './pages/AITherapistPage.jsx'
 import CommunityPage from './pages/CommunityPage.jsx'
 import DesignSystemPage from './pages/DesignSystemPage.jsx'
+import ProgressPage from './pages/ProgressPage.jsx'
+import MindfulnessPage from './pages/MindfulnessPage.jsx'
+import JournalPage from './pages/JournalPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 
-const AuthContext = createContext({ session: null })
+const AuthContext = createContext({ session: null, logout: undefined })
 const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} })
 
 export function useAuth() {
@@ -39,6 +43,16 @@ export default function App() {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     localStorage.setItem('theme', newTheme)
+  }
+
+  const logout = async () => {
+    try {
+      if (supabase) await supabase.auth.signOut()
+    } catch (e) {
+      console.error('Logout error:', e)
+    }
+    setSession(null)
+    navigate('/login', { replace: true })
   }
 
   useEffect(() => {
@@ -91,7 +105,7 @@ export default function App() {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <AuthContext.Provider value={{ session }}>
+      <AuthContext.Provider value={{ session, logout }}>
         <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617] text-textPrimary' : 'bg-[#F5F5F7] text-gray-900'}`}>
           <Routes>
           <Route
@@ -139,6 +153,38 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CommunityPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <ProgressPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mindfulness"
+            element={
+              <ProtectedRoute>
+                <MindfulnessPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/journal"
+            element={
+              <ProtectedRoute>
+                <JournalPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
