@@ -4,8 +4,7 @@
 // healthcheck).
 //
 // ZERO external dependencies. Uses only Node built-ins: fetch, setTimeout.
-// Never imports @google/genai at the top level so Vercel function loading
-// cannot fail due to SDK import/bundle errors.
+// Never imports @google/genai so Vercel function init can never fail on SDK.
 //
 // Expected input:  POST /api/nova
 //   {
@@ -20,15 +19,21 @@
 //
 // Healthcheck (no body needed):
 //   GET  /api/nova                -> { success: true, endpoint: 'nova', gemini_api_key_exists: boolean }
-//   GET  /api/nova/diagnose       -> dev-only detailed test (never in prod)
+//   GET  /api/nova/diagnose       -> dev-only detailed test (disabled in prod)
 //   POST /api/nova {diagnose:true} -> same as /diagnose
 // =============================================================================
 
 const MAX_HISTORY_TURNS = 12
 const MAX_USER_CONTEXT_LEN = 400
 const GEMINI_TIMEOUT_MS = 25000
-const DEFAULT_MODEL = 'gemini-2.0-flash'
-const FALLBACK_MODELS = ['gemini-2.0-flash-lite', 'gemini-1.5-flash-002', 'gemini-1.5-flash']
+
+// CURRENT PROVEN MODELS (confirmed working with the user's Gemini key, 2026-08-16):
+//   gemini-3.5-flash        ✅ (conversational, fast, new — used as primary)
+//   gemini-3-flash-preview  ✅ (slightly older, backup)
+// All gemini-1.x / gemini-2.0 / gemini-2.5 / "gemini-pro" models returned
+// 404 NOT_FOUND for this user's key type, so they are NOT used as fallbacks.
+const DEFAULT_MODEL = 'gemini-3.5-flash'
+const FALLBACK_MODELS = ['gemini-3-flash-preview']
 
 const NOVA_SYSTEM_INSTRUCTION = `You are Nova — the AI recovery companion inside the No Shake app.
 
@@ -173,9 +178,7 @@ async function fetchUserRecoveryContext(userId) {
 
 // ---------------------------------------------------------------------------
 // Gemini caller (HTTP REST, zero SDK deps).
-// Uses Google's JSON body spec:
-//   POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={API_KEY}
-//   body: { systemInstruction, contents, generationConfig }
+// Exact v1beta JSON spec compatible with gemini-3.5-flash / gemini-3-flash-preview.
 // ---------------------------------------------------------------------------
 function buildGeminiEndpoint(model, apiKey) {
   return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`
@@ -202,8 +205,6 @@ function classifyGeminiError(status, message) {
   return { kind, code }
 }
 
-// Calls Gemini, with per-model retries (429/5xx backoff), model fallback, timeout.
-// buildContents() is a thunk so we can retry without side-effects.
 async function callGeminiWithBackoff({ apiKey, primaryModel, buildContents, systemInstruction }) {
   const models = Array.from(new Set([primaryModel, ...FALLBACK_MODELS]))
 
@@ -252,7 +253,7 @@ async function callGeminiWithBackoff({ apiKey, primaryModel, buildContents, syst
           lastErr = mapped
 
           if (kind === 'AUTH') {
-            // Key broken, region-restricted, API not enabled — do not retry or switch model.
+            // Key broken, region-restricted, API not enabled — do NOT retry or switch model.
             return { ok: false, error: mapped, model, attempts: attempt }
           }
           if (kind === 'MODEL') break // next model (no retry same model)
@@ -378,7 +379,6 @@ async function handleDiagnose(req, res) {
 
 // ---------------------------------------------------------------------------
 // Healthcheck — always available via GET /api/nova.
-// Returns 200 JSON so you can confirm the endpoint exists in the browser.
 // ---------------------------------------------------------------------------
 function handleHealthcheck(_req, res) {
   const keyExists = !!process.env.GEMINI_API_KEY
@@ -397,7 +397,6 @@ function handleHealthcheck(_req, res) {
 // ---------------------------------------------------------------------------
 export default async function handler(req, res) {
   try {
-    // Basic routing: GET /api/nova (healthcheck), GET/POST /api/nova/diagnose, POST /api/nova (chat)
     let pathname = '/api/nova'
     try { pathname = (req.url && new URL(req.url, 'http://localhost').pathname) || '/api/nova' } catch (_) {}
 
@@ -564,8 +563,6 @@ export default async function handler(req, res) {
       })
     }
   } catch (fatal) {
-    // Absolute last-resort catch. If we reach here we had a handler bug, not a Gemini error.
-    // Always return valid JSON, never HTML/empty.
     const message = IS_DEV && fatal && fatal.message ? String(fatal.message) : 'Handler error'
     console.error('[NOVA] FATAL handler error:', fatal && fatal.stack ? fatal.stack : fatal)
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
