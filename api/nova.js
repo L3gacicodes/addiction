@@ -331,7 +331,16 @@ function sendJson(res, httpStatus, payload, debug) {
 // ---------------------------------------------------------------------------
 async function handleDiagnose(req, res) {
   if (IS_PROD) {
-    return sendJson(res, 404, { success: false, error: 'Not found', code: 'NOT_FOUND' })
+    // NOTE: We intentionally do NOT return HTTP 404 here, even though the route
+    // is disabled in production. Returning 404 confuses the frontend error
+    // router (which maps HTTP 404 -> code NOT_FOUND -> "Nova endpoint not found.")
+    // into falsely reporting the entire /api/nova endpoint is missing, when in
+    // fact only the sub-route /diagnose is disabled.
+    return sendJson(res, 405, {
+      success: false,
+      error: 'Diagnose endpoint is only available in preview or local development.',
+      code: 'DIAGNOSE_DISABLED',
+    })
   }
   const apiKey = process.env.GEMINI_API_KEY
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL

@@ -1,71 +1,70 @@
-// api/ai-response.js
+// api/ai-response.js (LEGACY BACKWARDS-COMPATIBLE ALIAS)
+//
+// This endpoint is OBSOLETE. The canonical Nova endpoint is POST /api/nova
+// (implemented in api/nova.js). No frontend code calls this file anymore.
+//
+// Rationale for keeping this file (not deleting it):
+//   • Legacy/beta deployments may still have cached clients or external scripts
+//     that call POST /api/ai-response with { message }.
+//   • Deleting it outright would break those cached clients with HTTP 404.
+//   • Consolidating it to re-use api/nova.js means we never again maintain two
+//     competing Nova implementations with different models, different keys, or
+//     different error-handling behavior.
+//
+// Behavior:
+//   • Passes the request through unchanged to the canonical nova.js handler.
+//   • On success: returns nova's `{ success:true, message, code }` AND ALSO
+//     includes legacy field `reply: message` for old code that reads it.
+//   • On error: returns nova's `{ success:false, error, code }` AND ALSO
+//     includes legacy field `reply: <fallback string>` for old code.
+import novaHandler from './nova.js'
+
+function _interopCompat(body) {
+  // Accept old legacy { message: string } payload format. If it also has
+  // conversation/userContext, nova.js already understands those.
+  return body
+}
+
 export default async function handler(req, res) {
-  // 1. Handle only POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      error: 'Method Not Allowed',
-      message: 'This endpoint only accepts POST requests' 
-    });
-  }
+  const originalWrite = { json: res.json.bind(res), status: res.status.bind(res) }
+  let intercepted = null
+  res.json = (payload) => { intercepted = payload; return res }
+  res.status = (code) => { intercepted = { ...intercepted, _status: code }; return originalWrite.status(code) }
 
   try {
-    const { message } = req.body;
+    if (req.body && typeof req.body === 'object') req.body = _interopCompat(req.body)
+    await novaHandler(req, res)
 
-    // 2. Validate input
-    if (!message || message.trim() === '') {
-      return res.status(400).json({ 
-        error: 'Bad Request',
-        message: 'Missing "message" in request body' 
-      });
-    }
-
-    // 3. Forward to Gemini (using existing server logic as template)
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const SYSTEM_PROMPT = 'You are a compassionate addiction recovery therapist. You help users overcome addictions using CBT-style advice. Always remain empathetic and positive.';
-
-    if (!GEMINI_API_KEY) {
-      console.error('GEMINI_API_KEY is not configured in Vercel');
-      return res.status(500).json({ 
-        error: 'Configuration Error',
-        reply: "I'm having trouble thinking right now. Please ensure my brain (API Key) is connected."
-      });
-    }
-
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: message }] }],
-          systemInstruction: { role: 'system', parts: [{ text: SYSTEM_PROMPT }] },
-        }),
+    // If interception never fired (e.g. new api/nova.js is still using native
+    // res.status().json() chain in order that our proxies aren't triggered),
+    // return directly — nothing else for us to do.
+    if (intercepted && typeof intercepted === 'object') {
+      if (intercepted.success === true && typeof intercepted.message === 'string') {
+        intercepted.reply = intercepted.message
+      } else if (typeof intercepted.error === 'string') {
+        intercepted.reply = intercepted.reply ||
+          "I'm having a little trouble connecting right now. Take a deep breath—I'm still here with you."
       }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Gemini API Error:', errorData);
-      return res.status(response.status).json({ 
-        error: 'AI Provider Error',
-        reply: "I'm feeling a bit overwhelmed. Could you repeat that in a moment?"
-      });
+      // Strip our internal _status marker before sending
+      delete intercepted._status
     }
-
-    const data = await response.json();
-    const aiMessage = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('\n') || "I'm listening. Tell me more.";
-
-    // 4. Return valid JSON response
-    return res.status(200).json({ reply: aiMessage });
-
-  } catch (error) {
-    console.error('Vercel API Handler Error:', error);
-    return res.status(500).json({ 
-      error: 'Internal Server Error',
-      reply: "I'm having a little trouble connecting right now. Take a deep breath—I'm still here with you."
-    });
+  } catch (err) {
+    console.error('[ai-response] forwarding error:', err && err.stack ? err.stack : err)
+    if (!intercepted || !intercepted.success) {
+      intercepted = {
+        success: false,
+        error: 'Internal Server Error',
+        code: 'NOVA_HANDLER_ERROR',
+        reply: "I'm having a little trouble connecting right now. Take a deep breath—I'm still here with you.",
+      }
+      originalWrite.status(500)
+    }
+  } finally {
+    // Ensure reply always written as JSON. Re-attach res.json for the final send.
+    res.json = originalWrite.json
+    if (intercepted !== null) {
+      res.status = originalWrite.status
+      return res.json(intercepted)
+    }
   }
 }
