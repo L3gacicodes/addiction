@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 
 import { AppShell, Topbar, BottomNav, StreakCard, ActionButtons } from '../components/Shell'
-import { MoodSelector, WeeklyProgress, AIPreviewCard, QuoteCard, CommunityFeed } from '../components/Widgets'
+import { AIPreviewCard, QuoteCard, CommunityFeed } from '../components/Widgets'
 import { StrongModal, RelapseModal, AIChatModal } from '../components/Modals'
 import IrokoTree from '../components/IrokoTree'
 
@@ -16,6 +16,8 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [communityPosts, setCommunityPosts] = useState([])
+  const [communityLoading, setCommunityLoading] = useState(true)
   const [selectedMood, setSelectedMood] = useState('Neutral')
   const [actionLoading, setActionLoading] = useState(false)
   
@@ -45,6 +47,27 @@ export default function Dashboard() {
     }
     loadProfile()
   }, [session])
+
+  useEffect(() => {
+    async function loadCommunityPreview() {
+      try {
+        setCommunityLoading(true)
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, comments(count)')
+          .order('created_at', { ascending: false })
+          .limit(2)
+        if (error) throw error
+        setCommunityPosts(data || [])
+      } catch (err) {
+        console.error('Error loading community preview:', err.message)
+        setCommunityPosts([])
+      } finally {
+        setCommunityLoading(false)
+      }
+    }
+    loadCommunityPreview()
+  }, [])
 
   const handleStayedStrong = async () => {
     if (actionLoading || hasCheckedInToday) return
@@ -143,7 +166,7 @@ export default function Dashboard() {
           <div className="space-y-2">
             <h2 className={`text-6xl font-black tracking-tighter leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               Your journey,<br />
-              <span className="text-primary">{profile?.username || 'Kamsy'}</span>
+              <span className="text-primary">{profile?.username || 'there'}</span>
             </h2>
             <div className="text-3xl mt-4">🌱</div>
           </div>
@@ -231,8 +254,6 @@ export default function Dashboard() {
             disabled={hasCheckedInToday}
           />
         </div>
-      </main>
-
 
         {/* AI Companion Card */}
         <motion.section 
@@ -263,7 +284,12 @@ export default function Dashboard() {
           transition={{ delay: 0.7 }}
           className="space-y-6 pb-12"
         >
-          <CommunityFeed onViewAll={() => navigate('/community')} />
+          <CommunityFeed 
+            posts={communityPosts} 
+            loading={communityLoading}
+            onViewAll={() => navigate('/community')} 
+            onPostClick={() => navigate('/community')}
+          />
         </motion.section>
       </main>
 

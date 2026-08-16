@@ -1,10 +1,64 @@
 import { motion } from 'framer-motion'
-import { Link, useLocation } from 'react-router-dom'
-import { useTheme } from '../App'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useTheme, useAuth } from '../App'
+import { supabase } from '../lib/supabaseClient'
 
 export const AppShell = ({ children }) => {
   const { theme } = useTheme()
+  const { session } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
+  const [sidebarPosts, setSidebarPosts] = useState([])
+  const [sidebarLoading, setSidebarLoading] = useState(true)
+  const [username, setUsername] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadUsername() {
+      if (!session?.user) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', session.user.id)
+        .single()
+      if (!cancelled) setUsername(data?.username || null)
+    }
+    loadUsername()
+    return () => { cancelled = true }
+  }, [session])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadSidebarPosts() {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, comments(count)')
+          .order('created_at', { ascending: false })
+          .limit(3)
+        if (error) throw error
+        if (!cancelled) setSidebarPosts(data || [])
+      } catch (err) {
+        console.error('Error loading sidebar posts:', err.message)
+        if (!cancelled) setSidebarPosts([])
+      } finally {
+        if (!cancelled) setSidebarLoading(false)
+      }
+    }
+    loadSidebarPosts()
+    return () => { cancelled = true }
+  }, [])
+
+  const timeAgo = (dateStr) => {
+    const diffMs = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'Just now'
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    return `${Math.floor(hrs / 24)}d ago`
+  }
 
   const sidebarItems = [
     { group: 'MAIN', items: [
@@ -21,9 +75,9 @@ export const AppShell = ({ children }) => {
   ]
 
   return (
-    <div className={`min-h-screen flex justify-center items-start overflow-x-hidden selection:bg-primary/30 relative transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen flex justify-center items-start overflow-x-hidden selection:bg-primary/30 relative transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-[#F5F5F7]'}`}>
       {/* Sidebar - Left */}
-      <div className={`hidden lg:flex flex-col w-72 h-screen sticky top-0 p-8 space-y-12 border-r transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-white'}`}>
+      <div className={`hidden lg:flex flex-col w-72 h-screen sticky top-0 p-8 space-y-12 border-r transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-[#F5F5F7]'}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <span className="text-xl">🌱</span>
@@ -50,7 +104,7 @@ export const AppShell = ({ children }) => {
                           ? 'bg-primary/10 border border-primary/20' 
                           : item.isPanic 
                             ? 'bg-panic/10 border border-panic/20' 
-                            : 'hover:bg-white/5'
+                            : theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-black/5'
                       }`}
                     >
                       <span className="text-lg relative z-10">{item.icon}</span>
@@ -74,14 +128,14 @@ export const AppShell = ({ children }) => {
       </div>
 
       {/* Main Content - Center */}
-      <div className={`w-full max-w-2xl min-h-screen relative flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-white'}`}>
-        <div className="flex-1 flex flex-col pt-12 px-10 pb-32">
+      <div className={`w-full max-w-2xl min-h-screen relative flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-[#F5F5F7] lg:bg-white'}`}>
+        <div className="flex-1 flex flex-col pt-8 px-6 lg:pt-12 lg:px-10 pb-32 lg:pb-12">
           {children}
         </div>
       </div>
 
       {/* Side Panel - Right */}
-      <div className={`hidden lg:flex flex-col w-96 h-screen sticky top-0 p-10 space-y-12 border-l transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-white'}`}>
+      <div className={`hidden lg:flex flex-col w-96 h-screen sticky top-0 p-10 space-y-12 border-l transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-[#F5F5F7]'}`}>
         {/* Nova AI Card */}
         <div className="space-y-6">
           <div className="flex justify-between items-center">
@@ -89,7 +143,7 @@ export const AppShell = ({ children }) => {
             <span className={`text-[10px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Always on</span>
           </div>
           
-          <div className={`rounded-[2.5rem] p-8 border relative overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5 shadow-2xl shadow-nova/10' : 'bg-gray-50 border-black/5 shadow-sm'}`}>
+          <div className={`rounded-[2.5rem] p-8 border relative overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5 shadow-2xl shadow-nova/10' : 'bg-white border-black/5 shadow-sm'}`}>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-nova/20 flex items-center justify-center text-2xl">🤖</div>
               <div>
@@ -101,9 +155,9 @@ export const AppShell = ({ children }) => {
               </div>
             </div>
             <p className={`text-sm font-medium leading-relaxed mb-8 transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-              What's on your mind today, Kamsy? I'm here whenever you need to talk.
+              What's on your mind today{username ? `, ${username}` : ''}? I'm here whenever you need to talk.
             </p>
-            <button className={`w-full py-4 rounded-2xl flex items-center justify-between px-6 transition-all border group ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20' : 'bg-white border-black/10 text-gray-400'}`}>
+            <button className={`w-full py-4 rounded-2xl flex items-center justify-between px-6 transition-all border group ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20' : 'bg-[#F5F5F7] border-black/5 text-gray-400 hover:bg-gray-100'}`}>
               <span className="text-[11px] font-black uppercase tracking-widest">Start AI session...</span>
               <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
             </button>
@@ -118,28 +172,44 @@ export const AppShell = ({ children }) => {
           </div>
           
           <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className={`rounded-[2rem] p-6 border space-y-4 transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5 shadow-sm'}`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">A</div>
-                  <div>
-                    <span className={`text-[11px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-700'}`}>Anonymous</span>
-                    <span className={`text-[10px] font-bold ml-2 transition-colors duration-300 ${theme === 'dark' ? 'text-white/20' : 'text-gray-400'}`}>Just now</span>
-                  </div>
-                </div>
-                <p className={`text-[12px] leading-relaxed transition-colors duration-300 ${theme === 'dark' ? 'text-white/80' : 'text-gray-600'}`}>
-                  "I stayed strong today even when things got tough. One day at a time."
-                </p>
-                <div className="flex items-center gap-4 text-[10px] font-black text-white/30">
-                  <div className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer">
-                    <span>▲</span> 4
-                  </div>
-                  <div className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
-                    <span>💬</span> 0 comments
-                  </div>
-                </div>
+            {sidebarLoading ? (
+              [1, 2].map(i => (
+                <div key={i} className={`rounded-[2rem] h-24 border animate-pulse transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5'}`} />
+              ))
+            ) : sidebarPosts.length === 0 ? (
+              <div className={`rounded-[2rem] p-6 border text-center transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5'}`}>
+                <p className={`text-[11px] font-bold transition-colors duration-300 ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`}>
+                  Be the first to share something.
+                 </p>
               </div>
-            ))}
+            ) : (
+              sidebarPosts.map(post => (
+                <div 
+                  key={post.id} 
+                  onClick={() => navigate('/community')}
+                  className={`rounded-[2rem] p-6 border space-y-4 cursor-pointer transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5 hover:border-white/10' : 'bg-white border-black/5 shadow-sm hover:border-black/10'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">A</div>
+                    <div>
+                      <span className={`text-[11px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-700'}`}>Anonymous</span>
+                      <span className={`text-[10px] font-bold ml-2 transition-colors duration-300 ${theme === 'dark' ? 'text-white/20' : 'text-gray-400'}`}>{timeAgo(post.created_at)}</span>
+                    </div>
+                   </div>
+                  <p className={`text-[12px] leading-relaxed line-clamp-2 transition-colors duration-300 ${theme === 'dark' ? 'text-white/80' : 'text-gray-600'}`}>
+                    {post.title}
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-black transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}">
+                    <div className="flex items-center gap-1.5">
+                      <span>▲</span> {post.upvotes || 0}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span>💬</span> {post.comments?.[0]?.count || 0} comments
+                    </div>
+                   </div>
+                 </div>
+              ))
+            )}
           </div>
         </div>
       </div>

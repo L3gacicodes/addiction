@@ -137,7 +137,7 @@ export const WeeklyProgress = () => {
                     initial={{ opacity: 0, y: 10, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                    className={`absolute bottom-full mb-4 z-50 p-4 rounded-2xl border shadow-2xl min-w-[140px] pointer-events-none transition-colors duration-300 ${theme === 'dark' ? 'bg-surface border-white/10' : 'bg-white border-black/10'}`}
+                    className={`absolute bottom-full mb-4 z-50 p-4 rounded-2xl border shadow-2xl min-w-[140px] pointer-events-none transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/10' : 'bg-white border-black/10'}`}
                   >
                     <p className={`text-[10px] font-black uppercase tracking-widest mb-2 pb-2 border-b transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 text-textPrimary' : 'border-black/5 text-gray-900'}`}>
                       {day} Breakdown
@@ -239,29 +239,16 @@ export const QuoteCard = () => {
   )
 }
 
-export const CommunityFeed = ({ posts = [], onViewAll }) => {
-  const defaultPosts = [
-    {
-      id: 1,
-      author: 'Anonymous Hero',
-      content: 'Just hit 30 days today! Never thought I could make it this far. To anyone struggling: it gets easier.',
-      likes: 24,
-      comments: 5,
-      time: '2h ago',
-      tags: ['Milestone', 'Motivation']
-    },
-    {
-      id: 2,
-      author: 'Fellow Traveler',
-      content: 'Having a rough night. The urges are strong but I am stronger. Staying busy with some reading.',
-      likes: 12,
-      comments: 8,
-      time: '4h ago',
-      tags: ['Struggling']
-    }
-  ]
-
-  const displayPosts = posts.length > 0 ? posts : defaultPosts
+export const CommunityFeed = ({ posts = [], loading = false, onViewAll, onPostClick }) => {
+  const timeAgo = (dateStr) => {
+    const diffMs = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'Just now'
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    return `${Math.floor(hrs / 24)}d ago`
+  }
 
   return (
     <div className="space-y-6 relative">
@@ -278,62 +265,67 @@ export const CommunityFeed = ({ posts = [], onViewAll }) => {
         </button>
       </div>
       
-      {displayPosts.map((post) => (
-        <motion.div
-          key={post.id}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-surface/40 backdrop-blur-xl rounded-[2rem] p-6 border border-white/[0.08] shadow-xl hover:border-community/30 transition-all group relative overflow-hidden"
-        >
-          {/* Background Illustration */}
-          <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2].map(i => (
+            <div key={i} className="bg-surface/40 rounded-[2rem] p-6 border border-white/[0.08] animate-pulse h-32" />
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-surface/40 backdrop-blur-xl rounded-[2rem] p-8 border border-white/[0.08] text-center">
+          <span className="text-3xl block mb-3">🌱</span>
+          <p className="text-sm font-medium text-textSecondary italic">Be the first person to start the conversation.</p>
+        </div>
+      ) : (
+        posts.map((post) => (
+          <motion.div
+            key={post.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            onClick={() => onPostClick?.(post.id)}
+            className="bg-surface/40 backdrop-blur-xl rounded-[2rem] p-6 border border-white/[0.08] shadow-xl hover:border-community/30 transition-all group relative overflow-hidden cursor-pointer"
+          >
+            {/* Background Illustration */}
+            <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+              <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
 
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-community/20 to-surface2 flex items-center justify-center border border-community/20">
-                <span className="text-lg">👤</span>
-              </div>
-              <div>
-                <p className="text-xs font-black text-textPrimary uppercase tracking-tight">{post.author}</p>
-                <p className="text-[9px] font-bold text-textSecondary uppercase tracking-widest mt-0.5">{post.time}</p>
+            <div className="flex justify-between items-start mb-4 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-community/20 to-surface2 flex items-center justify-center border border-community/20">
+                  <span className="text-lg">👤</span>
+                </div>
+                <div>
+                  <p className="text-xs font-black text-textPrimary uppercase tracking-tight">Anonymous</p>
+                  <p className="text-[9px] font-bold text-textSecondary uppercase tracking-widest mt-0.5">{timeAgo(post.created_at)}</p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              {post.tags.map(tag => (
-                <span key={tag} className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-community/10 rounded-full text-community border border-community/20">
-                  {tag}
-                </span>
-              ))}
+
+            <h4 className="text-sm font-black text-textPrimary mb-1 relative z-10">{post.title}</h4>
+            <p className="text-sm text-textSecondary leading-relaxed font-medium mb-6 relative z-10 line-clamp-2">
+              {post.content}
+            </p>
+
+            <div className="flex items-center gap-6 border-t border-white/[0.03] pt-4 relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🔥</span>
+                <span className="text-[10px] font-black text-textSecondary">{post.upvotes || 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-base">💬</span>
+                <span className="text-[10px] font-black text-textSecondary">{post.comments?.[0]?.count || 0}</span>
+              </div>
             </div>
-          </div>
-          
-          <p className="text-sm text-textSecondary leading-relaxed font-medium mb-6 relative z-10 italic">
-            "{post.content}"
-          </p>
-          
-          <div className="flex items-center gap-6 border-t border-white/[0.03] pt-4 relative z-10">
-            <button className="flex items-center gap-2 group/btn">
-              <span className="text-base group-hover/btn:scale-120 transition-transform">🔥</span>
-              <span className="text-[10px] font-black text-textSecondary group-hover/btn:text-primary transition-colors">{post.likes}</span>
-            </button>
-            <button className="flex items-center gap-2 group/btn">
-              <span className="text-base group-hover/btn:scale-120 transition-transform">💬</span>
-              <span className="text-[10px] font-black text-textSecondary group-hover/btn:text-textPrimary transition-colors">{post.comments}</span>
-            </button>
-            <button className="ml-auto text-lg opacity-40 hover:opacity-100 transition-opacity">
-              🔖
-            </button>
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        ))
+      )}
     </div>
   )
 }

@@ -92,7 +92,7 @@ export default function App() {
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <AuthContext.Provider value={{ session }}>
-        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-backgroundDeep text-textPrimary' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617] text-textPrimary' : 'bg-[#F5F5F7] text-gray-900'}`}>
           <Routes>
           <Route
             path="/"
