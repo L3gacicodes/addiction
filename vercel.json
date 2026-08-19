@@ -6,13 +6,9 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/nova/:path*", "destination": "/api/nova" },
+    { "source": "/api/ai-response/:path*", "destination": "/api/ai-response" },
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

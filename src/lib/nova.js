@@ -162,7 +162,12 @@ export async function diagnoseNova({ userToken } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   if (userToken) headers['Authorization'] = `Bearer ${userToken}`
   try {
-    const resp = await fetch(`${NOVA_ENDPOINT}/diagnose`, {
+    // Note: Vercel auto-dispatches api/nova.js for the exact path /api/nova.
+    // There is no api/nova/diagnose.js file, so calling /api/nova/diagnose would
+    // fall through to the SPA catch-all (GET returns HTML, POST returns 405).
+    // Instead, the handler inside api/nova.js accepts diagnose as a body field:
+    // POST /api/nova with body = { diagnose: true }
+    const resp = await fetch(NOVA_ENDPOINT, {
       method: 'POST',
       headers,
       body: JSON.stringify({ diagnose: true }),
