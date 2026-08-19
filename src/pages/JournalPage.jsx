@@ -16,6 +16,8 @@ export default function JournalPage() {
   const [content, setContent] = useState('')
   const [mood, setMood] = useState('Neutral')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+  const [loadError, setLoadError] = useState(null)
 
   const moods = [
     { icon: '😊', label: 'Great', color: 'primary' },
@@ -33,6 +35,8 @@ export default function JournalPage() {
     if (!session?.user) return
     try {
       setLoading(true)
+      setLoadError(null)
+      if (!supabase) throw new Error('Supabase client is not initialized. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY env vars.')
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
@@ -43,6 +47,7 @@ export default function JournalPage() {
       setEntries(data || [])
     } catch (err) {
       console.error('Journal load error:', err.message)
+      setLoadError(err.message)
     } finally {
       setLoading(false)
     }
@@ -51,7 +56,9 @@ export default function JournalPage() {
   async function handleSave() {
     if (!content.trim() || !session?.user) return
     setSaving(true)
+    setSaveError(null)
     try {
+      if (!supabase) throw new Error('Supabase client is not initialized. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY env vars.')
       const { error } = await supabase
         .from('journal_entries')
         .insert({
@@ -65,6 +72,7 @@ export default function JournalPage() {
       await loadEntries()
     } catch (err) {
       console.error('Journal save error:', err.message)
+      setSaveError(err.message)
     } finally {
       setSaving(false)
     }
@@ -83,6 +91,13 @@ export default function JournalPage() {
       <Topbar />
 
       <main className="space-y-12">
+        {loadError && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl p-5 border border-panic/30 bg-panic/10`}>
+            <p className={`text-[10px] font-black uppercase tracking-widest text-panic mb-2`}>⚠️ Failed to load entries</p>
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>{loadError}</p>
+          </motion.div>
+        )}
+
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="space-y-2 flex items-start justify-between">
             <div className="space-y-2">
@@ -152,6 +167,13 @@ export default function JournalPage() {
                   rows={10}
                   className={`w-full bg-transparent outline-none resize-none text-sm font-medium leading-relaxed placeholder:opacity-40 transition-colors duration-300 ${theme === 'dark' ? 'text-white placeholder:text-white/40' : 'text-gray-700 placeholder:text-gray-500'}`}
                 />
+
+                {saveError && (
+                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className={`rounded-xl p-4 border border-panic/30 bg-panic/10`}>
+                    <p className={`text-[10px] font-black uppercase tracking-widest text-panic mb-1`}>⚠️ Couldn't save</p>
+                    <p className={`text-xs font-medium ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>{saveError}</p>
+                  </motion.div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
