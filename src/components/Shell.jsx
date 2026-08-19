@@ -5,7 +5,7 @@ import { useTheme, useAuth } from '../App'
 import { supabase } from '../lib/supabaseClient'
 
 export const AppShell = ({ children }) => {
-  const { theme } = useTheme()
+  const { theme, toggleTheme } = useTheme()
   const { session } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -77,7 +77,26 @@ export const AppShell = ({ children }) => {
   return (
     <div className={`min-h-screen flex justify-center items-start overflow-x-hidden selection:bg-primary/30 relative transition-colors duration-300 ${theme === 'dark' ? 'bg-[#020617]' : 'bg-[#F5F5F7]'}`}>
       {/* Sidebar - Left */}
-      <div className={`hidden lg:flex flex-col w-72 h-screen sticky top-0 p-8 space-y-12 border-r transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-[#F5F5F7]'}`}>
+      <div className={`hidden lg:flex flex-col w-72 h-screen sticky top-0 p-8 space-y-10 border-r transition-colors duration-300 ${theme === 'dark' ? 'border-white/5 bg-[#020617]' : 'border-black/5 bg-[#F5F5F7]'}`}>
+        {/* Utility Controls: Dark Mode + Notifications (far-left control group) */}
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+          >
+            <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            aria-label="Notifications"
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+          >
+            <span className="text-xl">🔔</span>
+          </motion.button>
+        </div>
+
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <span className="text-xl">🌱</span>
@@ -223,20 +242,26 @@ export const AppShell = ({ children }) => {
 export const Topbar = ({ username, avatarUrl }) => {
   const { theme, toggleTheme } = useTheme()
   return (
-    <div className="flex items-center justify-end gap-3 mb-10 lg:absolute lg:top-12 lg:right-10">
-      <motion.button 
-        whileTap={{ scale: 0.9 }} 
-        onClick={toggleTheme}
-        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
-      >
-        <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
-      </motion.button>
-      <motion.button 
-        whileTap={{ scale: 0.9 }} 
-        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
-      >
-        <span className="text-xl">🔔</span>
-      </motion.button>
+    <div className="flex items-center justify-between mb-10 lg:absolute lg:top-12 lg:right-10 lg:left-10">
+      {/* Utility Controls - Mobile only (lg: hidden, since lg uses sidebar) */}
+      <div className="flex items-center gap-3 lg:hidden">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+        >
+          <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          aria-label="Notifications"
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 border ${theme === 'dark' ? 'bg-surface text-textSecondary border-white/[0.05] hover:text-textPrimary' : 'bg-white text-gray-400 border-black/[0.05] hover:text-gray-900 shadow-sm'}`}
+        >
+          <span className="text-xl">🔔</span>
+        </motion.button>
+      </div>
+      <div className="lg:hidden" />
     </div>
   )
 }
@@ -316,6 +341,7 @@ export const StreakCard = ({ streak, label, sub, colorClass, progress }) => {
 
 
 export const ActionButtons = ({ onStrong, onRelapse, onAI, onCommunity, disabled = false }) => {
+  const { theme } = useTheme()
   const buttons = [
     { 
       label: disabled ? 'Logged' : 'Strong', 
@@ -403,19 +429,19 @@ export const ActionButtons = ({ onStrong, onRelapse, onAI, onCommunity, disabled
           whileTap={btn.onClick ? { scale: 0.95 } : {}}
           onClick={btn.onClick}
           disabled={!btn.onClick}
-          className={`aspect-[1/1.1] bg-surface/40 backdrop-blur-xl rounded-[2.5rem] p-6 flex flex-col justify-between items-start border border-white/[0.08] transition-all group shadow-2xl ${btn.opacity} ${btn.border} hover:shadow-glow/20 relative overflow-hidden`}
+          className={`aspect-[1/1.1] backdrop-blur-xl rounded-[2.5rem] p-6 flex flex-col justify-between items-start border transition-all group shadow-2xl ${btn.opacity} ${btn.border} hover:shadow-glow/20 relative overflow-hidden ${theme === 'dark' ? 'bg-surface/40 border-white/[0.08]' : 'bg-white border-black/[0.05] shadow-sm'}`}
         >
           {/* Feature Gradient Background Overlay */}
           <div className={`absolute inset-0 bg-gradient-to-br ${btn.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
           
           {btn.illustration}
 
-          <div className={`w-14 h-14 rounded-2xl ${btn.bg} flex items-center justify-center text-3xl group-hover:scale-110 transition-transform border border-white/5 shadow-inner z-10`}>
+          <div className={`w-14 h-14 rounded-2xl ${btn.bg} flex items-center justify-center text-3xl group-hover:scale-110 transition-transform border ${theme === 'dark' ? 'border-white/5' : 'border-black/5'} shadow-inner z-10`}>
             {btn.icon}
           </div>
           <div className="relative z-10 mt-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary mb-1 opacity-60 leading-none">{btn.sub}</p>
-            <p className={`text-xl font-black uppercase tracking-tighter leading-none ${!disabled && (btn.color === 'panic' ? 'text-panic' : (btn.color === 'nova' ? 'text-nova' : (btn.color === 'community' ? 'text-community' : 'text-textPrimary')))}`}>
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-60 leading-none transition-colors duration-300 ${theme === 'dark' ? 'text-textSecondary' : 'text-gray-500'}`}>{btn.sub}</p>
+            <p className={`text-xl font-black uppercase tracking-tighter leading-none transition-colors duration-300 ${!disabled && (btn.color === 'panic' ? 'text-panic' : (btn.color === 'nova' ? 'text-nova' : (btn.color === 'community' ? 'text-community' : (theme === 'dark' ? 'text-textPrimary' : 'text-gray-900'))))}`}>
               {btn.label}
             </p>
           </div>

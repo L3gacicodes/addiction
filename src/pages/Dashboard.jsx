@@ -36,7 +36,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadProfile() {
-      if (!session?.user) return
+      if (!session?.user || !supabase) return
       const { data } = await supabase
         .from('profiles')
         .select('*')
@@ -70,7 +70,7 @@ export default function Dashboard() {
   }, [])
 
   const handleStayedStrong = async () => {
-    if (actionLoading || hasCheckedInToday) return
+    if (actionLoading || hasCheckedInToday || !supabase) return
     setActionLoading(true)
     try {
       const newStreak = (profile?.streak_count || 0) + 1
@@ -103,7 +103,7 @@ export default function Dashboard() {
   }
 
   const handleRelapse = async () => {
-    if (actionLoading) return
+    if (actionLoading || !supabase) return
     setActionLoading(true)
     
     // Optimistic UI update: Set streak to 0 immediately
@@ -180,14 +180,109 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
+        {/* I Chose Myself Today — Daily CTA (reuses Supabase last_checkin) */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          {hasCheckedInToday ? (
+            <motion.div
+              layout
+              className={`rounded-[2.5rem] p-8 md:p-10 border relative overflow-hidden transition-all duration-500 ${theme === 'dark' ? 'bg-primary/10 border-primary/30 shadow-[0_0_60px_rgba(34,197,94,0.1)]' : 'bg-primary/5 border-primary/20 shadow-sm'}`}
+            >
+              <div className={`absolute -top-16 -right-16 w-64 h-64 rounded-full blur-3xl opacity-30 ${theme === 'dark' ? 'bg-primary/40' : 'bg-primary/30'}`} />
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+                <div className="flex items-start gap-5">
+                  <div className={`w-16 h-16 md:w-20 md:h-20 rounded-3xl flex items-center justify-center flex-shrink-0 ${theme === 'dark' ? 'bg-primary/20' : 'bg-primary/15'}`}>
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ type: 'spring', bounce: 0.5 }}
+                      className="text-4xl md:text-5xl"
+                    >❤️</motion.span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className={`text-[10px] md:text-xs font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-primary' : 'text-primaryDark'}`}>
+                      Today · Logged
+                    </p>
+                    <h3 className={`text-2xl md:text-3xl font-black tracking-tight leading-tight transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      You chose yourself today ❤️
+                    </h3>
+                    <p className={`text-sm md:text-base font-medium leading-relaxed max-w-md transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                      Proud of you. Come back tomorrow and do it again. Every single day counts.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className={`inline-flex items-center gap-2 px-6 py-3.5 rounded-full font-black text-xs md:text-sm uppercase tracking-widest ${theme === 'dark' ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-primary/10 text-primaryDark border border-primary/20'}`}>
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    Completed
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              layout
+              whileHover={{ y: -4, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleStayedStrong}
+              disabled={actionLoading}
+              className={`w-full rounded-[2.5rem] p-8 md:p-10 border text-left relative overflow-hidden group transition-all duration-500 disabled:opacity-60 disabled:cursor-not-allowed ${theme === 'dark'
+                ? 'bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border-primary/30 hover:border-primary/50 hover:shadow-[0_0_80px_rgba(34,197,94,0.15)]'
+                : 'bg-gradient-to-br from-primary/10 via-white to-primary/5 border-primary/20 hover:border-primary/30 shadow-sm hover:shadow-md'
+              }`}
+            >
+              <div className={`absolute -top-20 -right-20 w-80 h-80 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 ${theme === 'dark' ? 'bg-primary' : 'bg-primary'}`} />
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+                <div className="flex items-start gap-5">
+                  <div className={`w-16 h-16 md:w-20 md:h-20 rounded-3xl flex items-center justify-center flex-shrink-0 ${theme === 'dark' ? 'bg-primary/20 group-hover:bg-primary/30' : 'bg-primary/15 group-hover:bg-primary/25'} transition-all duration-500 group-hover:scale-110`}>
+                    <span className="text-4xl md:text-5xl">🌳</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className={`text-[10px] md:text-xs font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-primary' : 'text-primaryDark'}`}>
+                      Daily Commitment
+                    </p>
+                    <h3 className={`text-2xl md:text-4xl font-black tracking-tight leading-tight transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      I Chose Myself Today
+                    </h3>
+                    <p className={`text-sm md:text-base font-medium leading-relaxed max-w-md transition-colors duration-300 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                      Tap to log today's check-in — extend your streak and plant the seed for tomorrow's you.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className={`inline-flex items-center gap-3 px-8 py-4 rounded-full font-black text-xs md:text-sm uppercase tracking-widest transition-all duration-500 shadow-lg group-hover:shadow-primary/30 ${theme === 'dark'
+                    ? 'bg-primary text-backgroundDeep hover:bg-primarySoft shadow-primary/20'
+                    : 'bg-primary text-white hover:bg-primaryDark shadow-primary/20'
+                  }`}>
+                    {actionLoading ? (
+                      <>
+                        <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                        Logging...
+                      </>
+                    ) : (
+                      <>
+                        Confirm Today
+                        <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.button>
+          )}
+        </motion.section>
+
         {/* Vertical Metric Cards Section */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex gap-4 h-[300px]"
+          className="flex gap-4 h-[280px] md:h-[300px] flex-nowrap overflow-x-auto pb-2 -mx-1 px-1 lg:flex-wrap lg:overflow-visible"
         >
-          <div className="flex-1">
+          <div className="flex-1 min-w-[200px]">
             <StreakCard 
               streak={profile?.streak_count || 0} 
               label="CUR STR"
@@ -196,7 +291,7 @@ export default function Dashboard() {
               progress={((profile?.streak_count || 0) % 14 / 14 * 100).toFixed(0)}
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-[200px]">
             <StreakCard 
               streak={`Lv. ${Math.floor((profile?.streak_count || 0) / 14) + 1}`}
               label="GRO LEV"
@@ -205,7 +300,7 @@ export default function Dashboard() {
               progress={35}
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-[200px]">
             <StreakCard 
               streak="S"
               label="VIT S"
@@ -231,11 +326,11 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className={`rounded-[2.5rem] p-10 border transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5'}`}>
+          <div className={`rounded-[2.5rem] p-6 md:p-10 border transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0F172A] border-white/5' : 'bg-gray-50 border-black/5'}`}>
             <div className="h-64 flex items-center justify-center">
               <IrokoTree streak={profile?.streak_count || 0} />
             </div>
-            <div className="mt-8 flex justify-between items-center">
+            <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
               <div>
                 <p className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>Tree Health</p>
                 <p className={`text-sm font-black transition-colors duration-300 ${theme === 'dark' ? 'text-primary' : 'text-primaryDark'}`}>Excellent</p>
@@ -248,8 +343,8 @@ export default function Dashboard() {
           </div>
         </motion.section>
 
-        {/* Action Buttons for Mobile */}
-        <div className="lg:hidden pb-12">
+        {/* Action Buttons — all breakpoints now */}
+        <div className="pb-12">
           <ActionButtons 
             onStrong={handleStayedStrong}
             onRelapse={() => setShowRelapseModal(true)}
